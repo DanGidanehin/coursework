@@ -1,0 +1,13 @@
+# Python cache and compiled files
+__pycache__/
+*.pyc
+
+# Virtual environment
+venv/
+
+# Output and generated plots
+result_output.txt
+
+# IDE / Editor settings (optional, if using VSCode or PyCharm, etc.)
+.vscode/
+.idea/
