@@ -25,8 +25,8 @@ def get_max_min_difference(matrix):
 
 
 def experiment_3_4_1_1():
-    iteration_values = list(range(1, 21))  # 1–100 ітерацій
-    sizes = list(range(3, 21))  # матриці 3x3 до 10x10
+    iteration_values = list(range(1, 31))  # 1–100 ітерацій
+    sizes = list(range(3, 31))  # матриці 3x3 до 10x10
     num_tasks_per_size = 10  # задач на кожен розмір
 
     avg_objectives = []
@@ -113,7 +113,7 @@ def experiment_3_4_2():
 
 def experiment_3_4_3_1():
     sizes = list(range(3, 21))  # 3x3 до 20x20
-    num_tasks = 30
+    num_tasks = 20
     g_times, t_times = [], []
 
     print("\n3.4.3.1 — Залежність часу від розмірності матриці")
@@ -148,7 +148,7 @@ def experiment_3_4_3_1():
 
 def experiment_3_4_3_2():
     sizes = list(range(3, 21))
-    num_tasks = 30
+    num_tasks = 20
     g_vals, t_vals = [], []
 
     print("\n3.4.3.2 — Залежність точності від розмірності матриці")

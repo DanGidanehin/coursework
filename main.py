@@ -5,9 +5,11 @@
 - Запуск алгоритмів: Жадібний, Двоетапний, Повний перебір.
 - Проведення експериментів із збереженням графіків.
 - Логування результатів у result_output.txt.
+- Вимірювання та вивід часу виконання кожного алгоритму.
 """
 
 import sys
+import time
 from typing import Optional, Tuple, List
 from greedy import greedy_allocation, visualize_allocation, print_allocation_info
 from two_stage import (
@@ -30,6 +32,8 @@ class Colors:
     PROMPT = "\033[94m"
     ERROR = "\033[91m"
     SUCCESS = "\033[92m"
+    WARNING = "\033[93m"
+    INFO = "\033[96m"
     RESET = "\033[0m"
 
 
@@ -86,6 +90,26 @@ def print_subheader(title: str):
     print(f"\n{format_text('-' * 40, Colors.HEADER)}")
     print(format_text(f" {title} ", Colors.HEADER))
     print(f"{format_text('-' * 40, Colors.HEADER)}\n")
+
+
+def print_timing_info(algorithm_name: str, execution_time: float):
+    """Виводить інформацію про час виконання алгоритму."""
+    if execution_time < 0.001:
+        time_str = f"{execution_time * 1000000:.2f} мкс"
+        color = Colors.SUCCESS
+    elif execution_time < 1.0:
+        time_str = f"{execution_time * 1000:.2f} мс"
+        color = Colors.INFO
+    elif execution_time < 60.0:
+        time_str = f"{execution_time:.4f} сек"
+        color = Colors.WARNING
+    else:
+        minutes = int(execution_time // 60)
+        seconds = execution_time % 60
+        time_str = f"{minutes} хв {seconds:.2f} сек"
+        color = Colors.ERROR
+
+    print(format_text(f"⏱️  Час виконання {algorithm_name}: {time_str}", color))
 
 
 def input_manual() -> Optional[Tuple[int, int, List[List[int]]]]:
@@ -160,24 +184,45 @@ def input_from_file() -> Optional[Tuple[int, int, List[List[int]]]]:
 
 
 def run_algorithms(m: int, n: int, matrix: List[List[int]]):
-    """Запускає всі алгоритми та виводить результати."""
+    """Запускає всі алгоритми та виводить результати з вимірюванням часу."""
     print_subheader("Результати алгоритмів")
+
+    total_time = 0.0
+    algorithm_times = {}
 
     # Жадібний алгоритм
     print("\nЗапуск Жадібного алгоритму...")
     try:
+        start_time = time.time()
         regions, iterations = greedy_allocation(matrix)
+        end_time = time.time()
+
+        execution_time = end_time - start_time
+        algorithm_times["Жадібний"] = execution_time
+        total_time += execution_time
+
         visualize_allocation(matrix, regions)
         print_allocation_info(matrix, regions, iterations)
+        print_timing_info("Жадібного алгоритму", execution_time)
+
     except Exception as e:
         print(format_text(f"Помилка в Жадібному алгоритмі: {e}", Colors.ERROR))
 
     # Двоетапний алгоритм
     print("\nЗапуск Двоетапного алгоритму...")
     try:
+        start_time = time.time()
         regions, iterations = two_stage_allocation(matrix)
+        end_time = time.time()
+
+        execution_time = end_time - start_time
+        algorithm_times["Двоетапний"] = execution_time
+        total_time += execution_time
+
         visualize_allocation_two_stage(matrix, regions)
         print_allocation_info_two_stage(matrix, regions, iterations)
+        print_timing_info("Двоетапного алгоритму", execution_time)
+
     except Exception as e:
         print(format_text(f"Помилка в Двоетапному алгоритмі: {e}", Colors.ERROR))
 
@@ -185,9 +230,18 @@ def run_algorithms(m: int, n: int, matrix: List[List[int]]):
     if m * n <= 16:
         print("\nЗапуск алгоритму Повного перебору...")
         try:
+            start_time = time.time()
             regions, combinations = brute_force_allocation(matrix)
+            end_time = time.time()
+
+            execution_time = end_time - start_time
+            algorithm_times["Повний перебір"] = execution_time
+            total_time += execution_time
+
             visualize_allocation_brute_force(matrix, regions)
             print_allocation_info_brute_force(matrix, regions, combinations)
+            print_timing_info("алгоритму Повного перебору", execution_time)
+
         except Exception as e:
             print(
                 format_text(f"Помилка в алгоритмі Повного перебору: {e}", Colors.ERROR)
@@ -195,14 +249,38 @@ def run_algorithms(m: int, n: int, matrix: List[List[int]]):
     else:
         print(
             format_text(
-                "Розмір матриці перевищує 4×4, Повний перебір пропущено.", Colors.ERROR
+                "Розмір матриці перевищує 4×4, Повний перебір пропущено.",
+                Colors.WARNING,
             )
         )
+
+    # Підсумкова статистика
+    print_subheader("Підсумкова статистика часу виконання")
+
+    if algorithm_times:
+        fastest = min(algorithm_times.items(), key=lambda x: x[1])
+        slowest = max(algorithm_times.items(), key=lambda x: x[1])
+
+        print(
+            f"📊 Загальний час виконання всіх алгоритмів: {format_text(f'{total_time:.4f} сек', Colors.INFO)}"
+        )
+        print(
+            f"🚀 Найшвидший алгоритм: {format_text(fastest[0], Colors.SUCCESS)} ({fastest[1]:.4f} сек)"
+        )
+        print(
+            f"🐌 Найповільніший алгоритм: {format_text(slowest[0], Colors.WARNING)} ({slowest[1]:.4f} сек)"
+        )
+
+        # Детальна таблиця часів
+        print("\n📋 Детальна статистика:")
+        for name, exec_time in sorted(algorithm_times.items(), key=lambda x: x[1]):
+            percentage = (exec_time / total_time) * 100
+            print(f"   {name:15}: {exec_time:.4f} сек ({percentage:.1f}%)")
 
 
 def solve_task():
     """Обробляє введення матриці та запускає алгоритми."""
-    print_header("Розв’язання задачі розподілу")
+    print_header("Розв'язання задачі розподілу")
     print("Оберіть спосіб введення матриці:")
     print("1 - Ручне введення")
     print("2 - Випадкова генерація")
@@ -228,7 +306,7 @@ def solve_task():
 
     m, n, matrix = result
     run_algorithms(m, n, matrix)
-    print(format_text("\nРозв’язання завершено.", Colors.SUCCESS))
+    print(format_text("\nРозв'язання завершено.", Colors.SUCCESS))
 
 
 def run_experiments():
@@ -264,13 +342,20 @@ def run_experiments():
     print_subheader(f"Запуск експерименту {choice}")
     func, plot_file = experiment_mapping[choice]
     try:
+        start_time = time.time()
         func()
+        end_time = time.time()
+
+        experiment_time = end_time - start_time
+
         print(
             format_text(
                 f"\nЕксперимент завершено. Графік збережено у {plot_file}",
                 Colors.SUCCESS,
             )
         )
+        print_timing_info("експерименту", experiment_time)
+
     except Exception as e:
         print(format_text(f"Помилка під час експерименту: {e}", Colors.ERROR))
 
@@ -285,7 +370,7 @@ def main():
         print_header("Розподіл земельних ділянок між 4 забудовниками")
         while True:
             print("\nГоловне меню:")
-            print("1 - Розв’язати задачу")
+            print("1 - Розв'язати задачу")
             print("2 - Провести експерименти")
             print("0 - Вийти")
             choice = logged_input("Ваш вибір: ").strip()
